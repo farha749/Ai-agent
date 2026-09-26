@@ -28,18 +28,26 @@ def run_slm(prompt):
 # Ollama - GPT-2
 # -----------------------------
 def run_gpt2(prompt):
+    response = ollama.generate(
+        model="atel3134/gpt2:124m",
+        prompt=prompt,
+        options={
+            "num_predict": 50,
+            "repeat_penalty": 1.2,
+            "temperature": 0.7
+        }
+    )
+
+    return response["response"].strip()
+
+# -----------------------------
+# GPT-3 style model - SmolLM 360M
+# -----------------------------
+def run_gpt3(prompt):
     import subprocess
 
-    history_text = ""
-
-    for item in chat_history[-2:]:
-        history_text += f"User: {item['user']}\n"
-        history_text += f"AI: {item['ai']}\n"
-
-    full_prompt = history_text + f"User: {prompt}\nAI:"
-
     result = subprocess.run(
-        ["ollama", "run", "atel3134/gpt2:124m", full_prompt],
+        ["ollama", "run", "smollm:360m", prompt],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -48,10 +56,9 @@ def run_gpt2(prompt):
     )
 
     if result.returncode != 0:
-        return "GPT-2 Error: " + (result.stderr or "Unknown error")
+        return "GPT-3 Error: " + (result.stderr or "Unknown error")
 
     return result.stdout.strip()
-
 
 # -----------------------------
 # Gemini API
@@ -142,13 +149,14 @@ print("1. SLM - Phi 3.5 (Ollama)")
 print("2. GPT-2 (Ollama)")
 print("3. Gemini 3 Flash")
 print("4. Gemini 3.5 Flash")
-print("5. Exit")
+print("5. GPT-3 - SmolLM 360M(ollama)")
+print("6. Exit")
 print("================")
 
 while True:
     choice = input("\nChoose model (1-5): ")
 
-    if choice == "5":
+    if choice == "6":
         print("AI Agent stopped.")
         break
 
@@ -163,9 +171,10 @@ while True:
             answer = run_gemini3(user_input)
         elif choice == "4":
             answer = run_gemini35(user_input)
-
+        elif choice == "5":
+            answer = run_gpt3(user_input)
         else:
-            print("Please choose 1, 2, 3, 4 or 5.")
+            print("Please choose 1, 2, 3, 4, 5 or 6 .")
             continue
         chat_history.append({"user": user_input, "ai": answer})
 
